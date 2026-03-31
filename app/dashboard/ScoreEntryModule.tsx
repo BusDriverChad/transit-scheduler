@@ -11,12 +11,58 @@ type Employee = {
 type ScoreCategory = {
   id: string
   name: string
+  bucket: string
   direction: 'positive' | 'negative'
   default_points: number
+  cap_points: number | null
   is_auto_generated: boolean
 }
 
+type HistoryEntry = {
+  id: string
+  points: number
+  note: string | null
+  created_at: string
+  score_categories: { name: string; bucket: string }
+}
+
+type OffenseCount = {
+  category_id: string
+  category_name: string
+  count: number
+}
+
 const today = () => new Date().toISOString().slice(0, 10)
+
+const BUCKETS = [
+  { key: 'positive', label: 'Positive' },
+  { key: 'conduct', label: 'Conduct' },
+  { key: 'service', label: 'Service' },
+  { key: 'compliance', label: 'Compliance' },
+  { key: 'vehicle', label: 'Vehicle' },
+]
+
+const BUCKET_COLORS: Record<string, string> = {
+  positive: '#4aff9e',
+  conduct: '#ff6b6b',
+  service: '#ffa94a',
+  compliance: '#c084fc',
+  vehicle: '#4a9eff',
+}
+
+function getEscalatedPoints(
+  basePoints: number,
+  capPoints: number | null,
+  offenseCount: number
+): number {
+  if (basePoints >= 0) return basePoints
+  const escalations = [1, 2, 3, 4, 5]
+  const multipliers = [1, 2, 3, 4, 4]
+  const idx = Math.min(offenseCount, escalations.length - 1)
+  const escalated = basePoints * multipliers[idx]
+  if (capPoints !== null) return Math.max(escalated, capPoints)
+  return escalated
+}
 
 export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -24,11 +70,16 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   const [employeeId, setEmployeeId] = useState('')
+  const [selectedBucket, setSelectedBucket] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [points, setPoints] = useState<number>(0)
   const [note, setNote] = useState('')
   const [shiftDate, setShiftDate] = useState(today())
   const [informed, setInformed] = useState(false)
+
+  const [driverHistory, setDriverHistory] = useState<HistoryEntry[]>([])
+  const [offenseCounts, setOffenseCounts] = useState<OffenseCount[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -48,23 +99,72 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
         .order('full_name'),
       supabase
         .from('score_categories')
-        .select('id, name, direction, default_points, is_auto_generated')
+        .select('id, name, bucket, direction, default_points, cap_points, is_auto_generated')
         .eq('is_auto_generated', false)
         .eq('is_active', true)
-        .order('direction')
         .order('name'),
     ]).then(([empRes, catRes]) => {
       if (empRes.data) setEmployees(empRes.data as Employee[])
-      if (catRes.data) setCategories(catRes.data as ScoreCategory[])
+      if (catRes.data) setCategories(catRes.data as unknown as ScoreCategory[])
       setLoading(false)
     })
   }, [])
 
-  // When category changes, reset points to that category's default
+  // Load driver history when employee selected
+  useEffect(() => {
+    if (!employeeId) {
+      setDriverHistory([])
+      setOffenseCounts([])
+      return
+    }
+    setLoadingHistory(true)
+    Promise.all([
+      supabase
+        .from('score_pending')
+        .select('id, points, note, created_at, score_categories(name, bucket)')
+        .eq('employee_id', employeeId)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('score_pending')
+        .select('category_id, score_categories(name)')
+        .eq('employee_id', employeeId)
+        .lt('points', 0),
+    ]).then(([histRes, offenseRes]) => {
+      if (histRes.data) setDriverHistory(histRes.data as unknown as HistoryEntry[])
+      if (offenseRes.data) {
+        const counts: Record<string, { name: string; count: number }> = {}
+        offenseRes.data.forEach((row: any) => {
+          const id = row.category_id
+          if (!counts[id]) counts[id] = { name: row.score_categories?.name ?? '', count: 0 }
+          counts[id].count++
+        })
+        setOffenseCounts(
+          Object.entries(counts).map(([category_id, v]) => ({
+            category_id,
+            category_name: v.name,
+            count: v.count,
+          }))
+        )
+      }
+      setLoadingHistory(false)
+    })
+  }, [employeeId])
+
+  const handleBucketChange = (bucket: string) => {
+    setSelectedBucket(bucket)
+    setCategoryId('')
+    setPoints(0)
+  }
+
   const handleCategoryChange = (id: string) => {
     setCategoryId(id)
     const cat = categories.find(c => c.id === id)
-    if (cat) setPoints(cat.default_points)
+    if (!cat) return
+    const offense = offenseCounts.find(o => o.category_id === id)
+    const offenseNum = offense ? offense.count : 0
+    const suggested = getEscalatedPoints(cat.default_points, cat.cap_points, offenseNum)
+    setPoints(suggested)
   }
 
   const handleSubmit = async () => {
@@ -98,6 +198,7 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
 
   const handleReset = () => {
     setEmployeeId('')
+    setSelectedBucket('')
     setCategoryId('')
     setPoints(0)
     setNote('')
@@ -105,11 +206,17 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
     setInformed(false)
     setError('')
     setSuccess(false)
+    setDriverHistory([])
+    setOffenseCounts([])
   }
 
-  const positiveCategories = categories.filter(c => c.direction === 'positive' && !c.is_auto_generated)
-  const negativeCategories = categories.filter(c => c.direction === 'negative' && !c.is_auto_generated)
+  const bucketCategories = categories.filter(c => c.bucket === selectedBucket)
   const selectedCat = categories.find(c => c.id === categoryId)
+  const selectedEmployee = employees.find(e => e.id === employeeId)
+  const currentOffense = selectedCat
+    ? offenseCounts.find(o => o.category_id === categoryId)
+    : null
+  const offenseNum = currentOffense ? currentOffense.count : 0
 
   const inputStyle = {
     background: 'rgba(255,255,255,0.05)',
@@ -147,18 +254,14 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
               <p className="text-[#4a6fa5] text-sm">It will appear in Pending Approvals for review.</p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={handleReset}
+              <button onClick={handleReset}
                 className="flex-1 py-3 rounded-xl text-white text-sm font-medium"
-                style={{ background: 'linear-gradient(135deg, #4a9eff 0%, #1a6fd4 100%)' }}
-              >
+                style={{ background: 'linear-gradient(135deg, #4a9eff 0%, #1a6fd4 100%)' }}>
                 Log Another
               </button>
-              <button
-                onClick={onClose}
+              <button onClick={onClose}
                 className="flex-1 py-3 rounded-xl text-sm font-medium"
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#4a6fa5' }}
-              >
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#4a6fa5' }}>
                 Close
               </button>
             </div>
@@ -175,8 +278,7 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
                 value={employeeId}
                 onChange={e => setEmployeeId(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
-                style={selectStyle}
-              >
+                style={selectStyle}>
                 <option value="">Select employee...</option>
                 {employees.map(e => (
                   <option key={e.id} value={e.id}>{e.full_name}</option>
@@ -184,32 +286,105 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
               </select>
             </div>
 
-            {/* Category */}
+            {/* Driver history panel */}
+            {employeeId && (
+              <div className="rounded-xl p-4 space-y-3"
+                style={{ background: 'rgba(74,111,165,0.08)', border: '1px solid rgba(74,111,165,0.2)' }}>
+                <p className="text-xs text-[#4a6fa5] uppercase tracking-wider font-medium">
+                  {selectedEmployee?.full_name} — Recent History
+                </p>
+                {loadingHistory ? (
+                  <p className="text-[#4a6fa5] text-xs">Loading...</p>
+                ) : driverHistory.length === 0 ? (
+                  <p className="text-[#4a6fa5] text-xs">No entries on record.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {driverHistory.map(entry => (
+                      <div key={entry.id} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-bold flex-shrink-0"
+                            style={{ color: entry.points >= 0 ? '#4aff9e' : '#ff6b6b' }}>
+                            {entry.points >= 0 ? '+' : ''}{entry.points}
+                          </span>
+                          <span className="text-xs text-white truncate">
+                            {entry.score_categories?.name}
+                          </span>
+                        </div>
+                        <span className="text-xs text-[#4a6fa5] flex-shrink-0">
+                          {new Date(entry.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Offense counts */}
+                {offenseCounts.length > 0 && (
+                  <div className="pt-2 border-t border-[rgba(74,111,165,0.2)]">
+                    <p className="text-xs text-[#4a6fa5] mb-1.5">Violation history:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {offenseCounts.map(o => (
+                        <span key={o.category_id}
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(255,107,107,0.1)', color: '#ff6b6b', border: '1px solid rgba(255,107,107,0.2)' }}>
+                          {o.category_name}: {o.count}x
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bucket selector */}
             <div>
-              <label className="block text-xs text-[#4a6fa5] uppercase tracking-wider mb-1.5">Category *</label>
-              <select
-                value={categoryId}
-                onChange={e => handleCategoryChange(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
-                style={selectStyle}
-              >
-                <option value="">Select category...</option>
-                {positiveCategories.length > 0 && (
-                  <optgroup label="Positive">
-                    {positiveCategories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name} (+{c.default_points})</option>
-                    ))}
-                  </optgroup>
-                )}
-                {negativeCategories.length > 0 && (
-                  <optgroup label="Negative">
-                    {negativeCategories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name} ({c.default_points})</option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+              <label className="block text-xs text-[#4a6fa5] uppercase tracking-wider mb-1.5">Category Type *</label>
+              <div className="grid grid-cols-5 gap-1.5">
+                {BUCKETS.map(b => (
+                  <button key={b.key}
+                    onClick={() => handleBucketChange(b.key)}
+                    className="py-2 rounded-xl text-xs font-medium transition-all"
+                    style={{
+                      background: selectedBucket === b.key
+                        ? `${BUCKET_COLORS[b.key]}25`
+                        : 'rgba(255,255,255,0.04)',
+                      border: selectedBucket === b.key
+                        ? `1px solid ${BUCKET_COLORS[b.key]}60`
+                        : '1px solid rgba(255,255,255,0.08)',
+                      color: selectedBucket === b.key
+                        ? BUCKET_COLORS[b.key]
+                        : '#4a6fa5',
+                    }}>
+                    {b.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Category within bucket */}
+            {selectedBucket && (
+              <div>
+                <label className="block text-xs text-[#4a6fa5] uppercase tracking-wider mb-1.5">Specific Category *</label>
+                <select
+                  value={categoryId}
+                  onChange={e => handleCategoryChange(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                  style={selectStyle}>
+                  <option value="">Select category...</option>
+                  {bucketCategories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Offense warning */}
+            {categoryId && selectedCat && selectedCat.direction === 'negative' && offenseNum > 0 && (
+              <div className="px-4 py-3 rounded-xl text-xs"
+                style={{ background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.2)', color: '#ff6b6b' }}>
+                ⚠ This is offense #{offenseNum + 1} for {selectedCat.name}.
+                Points auto-escalated to {points}. You can adjust below.
+              </div>
+            )}
 
             {/* Points adjuster */}
             {categoryId && (
@@ -217,17 +392,16 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
                 <label className="block text-xs text-[#4a6fa5] uppercase tracking-wider mb-1.5">
                   Points
                   {selectedCat && (
-                    <span className="ml-2 normal-case" style={{ color: '#4a6fa5' }}>
-                      (default: {selectedCat.default_points > 0 ? '+' : ''}{selectedCat.default_points})
+                    <span className="ml-2 normal-case text-[#4a6fa5]">
+                      (default: {selectedCat.default_points > 0 ? '+' : ''}{selectedCat.default_points}
+                      {selectedCat.cap_points !== null ? `, cap: ${selectedCat.cap_points}` : ''})
                     </span>
                   )}
                 </label>
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setPoints(p => p - 1)}
+                  <button onClick={() => setPoints(p => p - 1)}
                     className="w-9 h-9 rounded-xl text-lg font-bold flex-shrink-0"
-                    style={{ background: 'rgba(255,107,107,0.15)', color: '#ff6b6b', border: '1px solid rgba(255,107,107,0.25)' }}
-                  >
+                    style={{ background: 'rgba(255,107,107,0.15)', color: '#ff6b6b', border: '1px solid rgba(255,107,107,0.25)' }}>
                     −
                   </button>
                   <input
@@ -241,11 +415,9 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
                       caretColor: '#4a9eff',
                     }}
                   />
-                  <button
-                    onClick={() => setPoints(p => p + 1)}
+                  <button onClick={() => setPoints(p => p + 1)}
                     className="w-9 h-9 rounded-xl text-lg font-bold flex-shrink-0"
-                    style={{ background: 'rgba(74,255,158,0.15)', color: '#4aff9e', border: '1px solid rgba(74,255,158,0.25)' }}
-                  >
+                    style={{ background: 'rgba(74,255,158,0.15)', color: '#4aff9e', border: '1px solid rgba(74,255,158,0.25)' }}>
                     +
                   </button>
                 </div>
@@ -300,11 +472,9 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
 
             {/* Actions */}
             <div className="flex gap-3 pt-2">
-              <button
-                onClick={onClose}
+              <button onClick={onClose}
                 className="flex-1 py-3 rounded-xl text-sm font-medium"
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#4a6fa5' }}
-              >
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#4a6fa5' }}>
                 Cancel
               </button>
               <button
@@ -315,8 +485,7 @@ export default function ScoreEntryModule({ onClose }: { onClose: () => void }) {
                   background: submitting
                     ? 'rgba(74,158,255,0.4)'
                     : 'linear-gradient(135deg, #4a9eff 0%, #1a6fd4 100%)',
-                }}
-              >
+                }}>
                 {submitting ? 'Submitting...' : 'Submit Entry'}
               </button>
             </div>
