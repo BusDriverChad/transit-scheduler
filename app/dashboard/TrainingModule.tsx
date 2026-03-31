@@ -114,7 +114,7 @@ export default function TrainingModule() {
         .select('employee_id, position_id, exemption_type, snooze_until, reversed')
         .limit(10000),
     ])
-    if (empRes.data) setEmployees(empRes.data as Employee[])
+    if (empRes.data) setEmployees(empRes.data as unknown as Employee[])
     if (posRes.data) {
       setPositions(posRes.data as Position[])
       console.log('positions:', posRes.data)
