@@ -74,7 +74,7 @@ export default function ScoresModule() {
       .from('scores')
       .select('id, employee_id, tenure_score, performance_score, combined_score, employees(full_name, hire_date, roles(name))')
       .order('combined_score', { ascending: false })
-    if (data) setScores(data as ScoreRow[])
+    if (data) setScores(data as any)
     setLoadingScores(false)
   }
 
