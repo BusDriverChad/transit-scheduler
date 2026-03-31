@@ -271,7 +271,7 @@ export default function TrainingModule() {
       {loading ? (
         <div className="text-[#4a6fa5] text-sm pt-4">Loading...</div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl"
+        <div className="overflow-x-auto rounded-2xl w-full max-w-full"
           style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
           <table className="w-full border-collapse" style={{ minWidth: '520px' }}>
             <thead>
