@@ -178,7 +178,7 @@ export default function Dashboard() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col md:ml-0 pt-14 md:pt-0">
+      <div className="flex-1 min-w-0 flex flex-col md:ml-0 pt-14 md:pt-0 overflow-x-hidden">
 
         {/* Page header */}
         <div className="px-6 py-6 border-b border-white/5">
@@ -203,7 +203,7 @@ export default function Dashboard() {
         </div>
 
         {/* Section content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 md:p-6">
 
           {section === 'home' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
