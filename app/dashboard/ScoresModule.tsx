@@ -108,7 +108,7 @@ export default function ScoresModule() {
     const { data } = await supabase
       .from('score_pending')
       .select('id, employee_id, submitted_by, points, note, employees!score_pending_employee_id_fkey(full_name), submitter:employees!score_pending_submitted_by_fkey(full_name), score_categories(name)')
-      .order('created_at', { ascending: false })
+      .order('submitted_at', { ascending: false })
     if (data) setPending(data as unknown as PendingRow[])
     setLoadingPending(false)
   }
