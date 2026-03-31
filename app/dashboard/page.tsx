@@ -174,6 +174,13 @@ export default function Dashboard() {
               <span>⭐</span> Log Entry
             </button>
             <button
+              onClick={() => { setShowScoreEntry(true); setMobileMenuOpen(false) }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white mb-2"
+              style={{ background: 'linear-gradient(135deg, #4a9eff 0%, #1a6fd4 100%)' }}
+            >
+              <span>⭐</span> Log Entry
+            </button>
+            <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm"
               style={{ color: '#ff6b6b' }}
