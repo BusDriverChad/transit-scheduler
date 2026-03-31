@@ -90,7 +90,7 @@ export default function ScoresModule() {
     setApprovingId(pendingId)
     await supabase.rpc('approve_score_entry', { p_pending_id: pendingId, p_approved_by: currentUserId })
     setApprovingId(null)
-    await Promise.all([fetchPending(), fetchScores()])
+    await fetchPending(); await new Promise(r => setTimeout(r, 500)); await fetchScores()
   }
 
   const handleDenyConfirm = async (pendingId: string) => {
@@ -100,7 +100,7 @@ export default function ScoresModule() {
     setDenyingId(null)
     setConfirmingDenyId(null)
     setDenyReason('')
-    await Promise.all([fetchPending(), fetchScores()])
+    await fetchPending(); await new Promise(r => setTimeout(r, 500)); await fetchScores()
   }
 
   const fetchPending = async () => {
