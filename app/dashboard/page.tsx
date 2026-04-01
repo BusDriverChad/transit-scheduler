@@ -192,7 +192,7 @@ export default function Dashboard() {
         <div className="px-6 py-6 border-b border-white/5">
           <div>
             <h1 className="text-white text-xl font-semibold">
-              {section === 'home' && `Good morning, ${employeeName}`}
+              {section === 'home' && `${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}, ${employeeName}`}
               {section === 'employees' && 'Employees'}
               {section === 'schedule' && 'Schedule'}
               {section === 'scores' && 'Scores'}
@@ -259,3 +259,4 @@ export default function Dashboard() {
     </div>
   )
 }
+
