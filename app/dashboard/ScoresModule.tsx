@@ -644,13 +644,13 @@ export default function ScoresModule() {
           </>
         )}
       </div>
-    </div>
 
-    {selectedDriverId && (
-      <DriverProfileModal
-        employeeId={selectedDriverId}
-        onClose={() => setSelectedDriverId(null)}
-      />
-    )}
+      {selectedDriverId && (
+        <DriverProfileModal
+          employeeId={selectedDriverId}
+          onClose={() => setSelectedDriverId(null)}
+        />
+      )}
+    </div>
   )
 }
