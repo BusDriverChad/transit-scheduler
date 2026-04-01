@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import DriverProfileModal from './DriverProfileModal'
 
 type ScoreRow = {
   id: string
@@ -95,6 +96,7 @@ export default function ScoresModule() {
 
   // Edit state keyed by pending row id
   const [editStates, setEditStates] = useState<Record<string, EditState>>({})
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -605,13 +607,18 @@ export default function ScoresModule() {
                     <div className="text-xs font-bold text-right" style={{ color: badge.color }}>
                       {badge.label}
                     </div>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                    <button
+                      className="flex items-center gap-3 min-w-0 text-left group"
+                      onClick={() => setSelectedDriverId(row.employee_id)}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
                         style={{ background: 'rgba(74,158,255,0.12)', color: '#4a9eff' }}>
                         {row.employees?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-white text-sm font-medium truncate">{row.employees?.full_name}</div>
+                        <div className="text-white text-sm font-medium truncate group-hover:text-[#4a9eff] transition-colors">
+                          {row.employees?.full_name}
+                        </div>
                         <span className="text-xs px-1.5 py-0.5 rounded-full"
                           style={{
                             background: `${ROLE_COLORS[roleName] ?? '#4a6fa5'}20`,
@@ -620,7 +627,7 @@ export default function ScoresModule() {
                           {roleName.replace('_', ' ')}
                         </span>
                       </div>
-                    </div>
+                    </button>
                     <div className="text-sm font-medium text-center" style={{ color: scoreColor(row.tenure_score) }}>
                       {row.tenure_score.toFixed(1)}
                     </div>
@@ -638,5 +645,12 @@ export default function ScoresModule() {
         )}
       </div>
     </div>
+
+    {selectedDriverId && (
+      <DriverProfileModal
+        employeeId={selectedDriverId}
+        onClose={() => setSelectedDriverId(null)}
+      />
+    )}
   )
 }
