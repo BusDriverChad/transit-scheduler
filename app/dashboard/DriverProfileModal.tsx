@@ -138,15 +138,25 @@ export default function DriverProfileModal({ employeeId, onClose }: Props) {
       )
     }
     if (trainingRes.data) {
-      setTrainings(
-        trainingRes.data
-          .map((t: any) => ({
-            position: t.positions?.name ?? '',
-            cdl_required: t.positions?.cdl_required ?? false,
-          }))
-          .filter(t => t.position)
-          .sort((a: Training, b: Training) => a.position.localeCompare(b.position))
-      )
+      const categoryOrder = ["Bus", "Trolley", "DAR", "Micro", "Lead"]
+      const seen = new Set<string>()
+      const mapped: Training[] = []
+      trainingRes.data.forEach((t: any) => {
+        const name: string = t.positions?.name ?? ""
+        const cdl: boolean = t.positions?.cdl_required ?? false
+        let category = ""
+        if (name.toLowerCase().includes("bus")) category = "Bus"
+        else if (name.toLowerCase().includes("trolley")) category = "Trolley"
+        else if (name.toLowerCase().includes("dar")) category = "DAR"
+        else if (name.toLowerCase().includes("micro")) category = "Micro"
+        else if (name.toLowerCase().includes("lead")) category = "Lead"
+        if (category && !seen.has(category)) {
+          seen.add(category)
+          mapped.push({ position: category, cdl_required: cdl })
+        }
+      })
+      mapped.sort((a, b) => categoryOrder.indexOf(a.position) - categoryOrder.indexOf(b.position))
+      setTrainings(mapped)
     }
     setLoading(false)
   }
@@ -406,4 +416,3 @@ export default function DriverProfileModal({ employeeId, onClose }: Props) {
     </div>
   )
 }
-
