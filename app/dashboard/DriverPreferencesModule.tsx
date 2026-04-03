@@ -205,9 +205,9 @@ export default function DriverPreferencesModule() {
             <button
               key={emp.id}
               onClick={() => selectEmployee(emp)}
-              className={`w-full text-left px-4 py-3 text-sm border-b border-gray-100 hover:bg-white transition-colors ${
-                selectedEmployee?.id === emp.id ? 'bg-white border-l-4 border-l-blue-500 font-medium' : ''
-              }`}
+              className={`w-full text-left px-4 py-3 text-sm border-b border-gray-100 hover:bg-gray-200 transition-colors text-gray-800 ${
+  selectedEmployee?.id === emp.id ? 'bg-white border-l-4 border-l-blue-500 font-medium text-gray-900' : 'text-gray-600'
+}`}
             >
               {emp.full_name}
             </button>
@@ -246,7 +246,7 @@ export default function DriverPreferencesModule() {
 
             {/* Shift preference */}
             <section>
-              <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Shift Preference</h4>
+             className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-2">Shift Preference</h4>
               <div className="flex gap-2">
                 {(['AM', 'PM', 'none'] as const).map(opt => (
                   <button
@@ -320,7 +320,7 @@ export default function DriverPreferencesModule() {
             {/* Position preferences — ranked list */}
             <section>
               <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Position Preferences (ranked)</h4>
-              <p className="text-xs text-gray-500 mb-3">Drag to reorder. Rank 1 = most preferred.</p>
+              <p className="text-xs text-gray-400 mb-3">Drag to reorder. Rank 1 = most preferred.</p>
 
               {prefs.position_preferences.length === 0 ? (
                 <p className="text-sm text-gray-400 italic mb-3">No positions ranked yet</p>
@@ -350,7 +350,7 @@ export default function DriverPreferencesModule() {
               {/* Add position dropdown */}
               {availablePositions.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Add a position:</p>
+                  <p className="text-xs text-gray-400 mb-1">Add a position:</p>
                   <div className="flex flex-wrap gap-2">
                     {availablePositions.map(pos => (
                       <button
