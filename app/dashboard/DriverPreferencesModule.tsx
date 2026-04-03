@@ -85,7 +85,7 @@ export default function DriverPreferencesModule() {
       .from('driver_preferences')
       .select('*')
       .eq('employee_id', emp.id)
-      .single()
+      .maybeSingle()
     if (data) {
       setPrefs(data)
     } else {
