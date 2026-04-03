@@ -66,7 +66,7 @@ export default function DriverPreferencesModule() {
       .from('employees')
       .select('id, full_name')
       .eq('is_active', true)
-      .order('last_name')
+      .order('full_name')
     if (data) setEmployees(data)
   }
 
