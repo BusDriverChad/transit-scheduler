@@ -225,7 +225,7 @@ export default function DriverPreferencesModule() {
           <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
             Loading...
           </div>
-      ) : (
+        ) : (
           <div className="max-w-2xl space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800">
