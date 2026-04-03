@@ -179,7 +179,7 @@ export default function DriverPreferencesModule() {
   }
 
   const filteredEmployees = employees.filter(e =>
-    `${e.first_name} ${e.last_name}`.toLowerCase().includes(search.toLowerCase())
+    `${e.full_name}`.toLowerCase().includes(search.toLowerCase())
   )
 
   const availablePositions = positions.filter(
