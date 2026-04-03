@@ -284,32 +284,26 @@ export default function EmployeesModule() {
               }}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: 'rgba(74,158,255,0.15)', color: '#4a9eff' }}>
-                    {emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                  <div>
-                    <div className="text-white text-sm font-medium">{emp.full_name}</div>
-                    <div className="flex items-center gap-2 mt-0.5">
+                <div className="min-w-0">
+                  <div className="text-white text-sm font-medium">{emp.full_name}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        background: `${ROLE_COLORS[emp.roles?.name] || '#4a6fa5'}20`,
+                        color: ROLE_COLORS[emp.roles?.name] || '#4a6fa5'
+                      }}>
+                      {emp.roles?.name?.replace('_', ' ')}
+                    </span>
+                    <span className="text-[#4a6fa5] text-xs">{TYPE_LABELS[emp.employment_type]}</span>
+                    {!emp.is_active && (
                       <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={{
-                          background: `${ROLE_COLORS[emp.roles?.name] || '#4a6fa5'}20`,
-                          color: ROLE_COLORS[emp.roles?.name] || '#4a6fa5'
-                        }}>
-                        {emp.roles?.name?.replace('_', ' ')}
+                        style={{ background: 'rgba(255,255,255,0.06)', color: '#4a6fa5' }}>
+                        Inactive
                       </span>
-                      <span className="text-[#4a6fa5] text-xs">{TYPE_LABELS[emp.employment_type]}</span>
-                      {!emp.is_active && (
-                        <span className="text-xs px-2 py-0.5 rounded-full"
-                          style={{ background: 'rgba(255,255,255,0.06)', color: '#4a6fa5' }}>
-                          Inactive
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <div className="text-[#4a6fa5] text-xs">{emp.preferred_hours}hrs/wk</div>
                   <div className="text-[#4a6fa5] text-xs mt-0.5">{tenureMonths(emp.hire_date)}</div>
                 </div>
@@ -333,7 +327,6 @@ export default function EmployeesModule() {
             </div>
 
             <div className="space-y-4">
-
               <div>
                 <label className="block text-xs text-[#4a6fa5] uppercase tracking-wider mb-1.5">Full Name *</label>
                 <input
@@ -513,21 +506,15 @@ export default function EmployeesModule() {
             style={{ background: '#0d1525', border: '1px solid rgba(255,255,255,0.1)' }}>
 
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold"
-                  style={{ background: 'rgba(74,158,255,0.15)', color: '#4a9eff' }}>
-                  {selected.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
-                <div>
-                  <h2 className="text-white font-semibold text-lg">{selected.full_name}</h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full"
-                    style={{
-                      background: `${ROLE_COLORS[selected.roles?.name] || '#4a6fa5'}20`,
-                      color: ROLE_COLORS[selected.roles?.name] || '#4a6fa5'
-                    }}>
-                    {selected.roles?.name?.replace('_', ' ')}
-                  </span>
-                </div>
+              <div>
+                <h2 className="text-white font-semibold text-lg">{selected.full_name}</h2>
+                <span className="text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    background: `${ROLE_COLORS[selected.roles?.name] || '#4a6fa5'}20`,
+                    color: ROLE_COLORS[selected.roles?.name] || '#4a6fa5'
+                  }}>
+                  {selected.roles?.name?.replace('_', ' ')}
+                </span>
               </div>
               <button onClick={() => { setSelected(null); setConfirmDeactivate(false) }} className="text-[#4a6fa5] hover:text-white">✕</button>
             </div>
@@ -644,7 +631,6 @@ export default function EmployeesModule() {
             </div>
 
             <div className="space-y-4">
-
               <div>
                 <label className="block text-xs text-[#4a6fa5] uppercase tracking-wider mb-1.5">Full Name *</label>
                 <input
