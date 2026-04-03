@@ -5,8 +5,7 @@ import { supabase } from '@/lib/supabase'
 
 type Employee = {
   id: string
-  first_name: string
-  last_name: string
+  full_name: string
 }
 
 type Position = {
@@ -65,7 +64,7 @@ export default function DriverPreferencesModule() {
   async function fetchEmployees() {
     const { data } = await supabase
       .from('employees')
-      .select('id, first_name, last_name')
+      .select('id, full_name')
       .eq('is_active', true)
       .order('last_name')
     if (data) setEmployees(data)
@@ -227,11 +226,9 @@ export default function DriverPreferencesModule() {
             Loading...
           </div>
         ) : (
-          <div className="max-w-2xl space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
-                {selectedEmployee.first_name} {selectedEmployee.last_name}
-              </h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+  {selectedEmployee.full_name}
+</h3>
               <button
                 onClick={save}
                 disabled={saving}
