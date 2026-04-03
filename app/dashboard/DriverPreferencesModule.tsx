@@ -356,7 +356,7 @@ export default function DriverPreferencesModule() {
                       <button
                         key={pos.id}
                         onClick={() => addPositionPref(pos)}
-                        className="px-3 py-1.5 text-xs border border-dashed border-gray-300 rounded hover:border-blue-400 hover:text-blue-600 transition-colors"
+                        className="px-3 py-1.5 text-xs border border-dashed border-gray-300 text-gray-800 bg-white rounded hover:border-blue-400 hover:text-blue-600 transition-colors"
                       >
                         + {pos.name}
                       </button>
