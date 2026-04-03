@@ -6,7 +6,8 @@ import EmployeesModule from './EmployeesModule'
 import ScoresModule from './ScoresModule'
 import TrainingModule from './TrainingModule'
 import ScoreEntryModule from './ScoreEntryModule'
-type Section = 'home' | 'employees' | 'schedule' | 'scores' | 'training' | 'reports'
+import DriverPreferencesModule from './DriverPreferencesModule'
+type Section = 'home' | 'employees' | 'schedule' | 'scores' | 'training' | 'reports' | 'preferences'
 
 export default function Dashboard() {
   const [section, setSection] = useState<Section>('home')
@@ -57,6 +58,7 @@ export default function Dashboard() {
     { id: 'scores', label: 'Scores', icon: '⭐' },
     { id: 'training', label: 'Training', icon: '🎓' },
     { id: 'reports', label: 'Reports', icon: '📊' },
+    { id: 'preferences', label: 'Preferences', icon: '⚙️' },
   ]
 
   return (
@@ -198,8 +200,10 @@ export default function Dashboard() {
               {section === 'scores' && 'Scores'}
               {section === 'training' && 'Training'}
               {section === 'reports' && 'Reports'}
+              {section === 'preferences' && 'Preferences'}
             </h1>
             <p className="text-[#4a6fa5] text-sm mt-0.5">
+              {section === 'preferences' && 'Set driver scheduling preferences'}
               {section === 'home' && 'Durango Transit Operations'}
               {section === 'employees' && 'Manage your team'}
               {section === 'schedule' && 'View and manage the schedule'}
@@ -240,6 +244,7 @@ export default function Dashboard() {
           {section === 'employees' && <EmployeesModule />}
           {section === 'scores' && <ScoresModule />}
           {section === 'training' && <TrainingModule />}
+          {section === 'preferences' && <DriverPreferencesModule />}
 
 {section !== 'home' && section !== 'employees' && section !== 'scores' && section !== 'training' && (
             <div className="flex items-center justify-center h-64">
