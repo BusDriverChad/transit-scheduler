@@ -133,17 +133,14 @@ export default function ScoresModule() {
     setLoadingPending(false)
   }
 
-  // Toggle edit panel open/closed for a card
   const toggleEdit = async (row: PendingRow) => {
     const existing = editStates[row.id]
 
-    // Close if already open
     if (existing?.open) {
       setEditStates(prev => ({ ...prev, [row.id]: { ...prev[row.id], open: false } }))
       return
     }
 
-    // Open — initialize state and load history
     setEditStates(prev => ({
       ...prev,
       [row.id]: {
@@ -156,7 +153,6 @@ export default function ScoresModule() {
       }
     }))
 
-    // Only fetch if we haven't already
     if (existing?.history?.length) return
 
     const [histRes, offenseRes] = await Promise.all([
@@ -175,7 +171,6 @@ export default function ScoresModule() {
     ])
 
     const history: HistoryEntry[] = (histRes.data ?? []) as unknown as HistoryEntry[]
-    // Exclude the current pending row from history display
     const filteredHistory = history.filter(h => h.id !== row.id).slice(0, 5)
 
     const counts: Record<string, { name: string; count: number }> = {}
@@ -212,7 +207,6 @@ export default function ScoresModule() {
     const pointsChanged = adjustedPoints !== row.points
     const adjustmentNote = edit?.adjustmentNote?.trim() ?? ''
 
-    // If points were changed, require an adjustment note
     if (pointsChanged && !adjustmentNote) {
       setEditStates(prev => ({
         ...prev,
@@ -224,7 +218,6 @@ export default function ScoresModule() {
 
     setApprovingId(row.id)
 
-    // If points were adjusted, log the change in score_structure_log first
     if (pointsChanged) {
       await supabase.from('score_structure_log').insert({
         changed_by: currentUserId,
@@ -239,7 +232,6 @@ export default function ScoresModule() {
         }),
       })
 
-      // Update the pending row's points before approving
       await supabase
         .from('score_pending')
         .update({ points: adjustedPoints })
@@ -252,7 +244,6 @@ export default function ScoresModule() {
     })
 
     setApprovingId(null)
-    // Clean up edit state for this card
     setEditStates(prev => {
       const next = { ...prev }
       delete next[row.id]
@@ -353,7 +344,6 @@ export default function ScoresModule() {
                         {/* Action buttons */}
                         <div className="flex flex-col gap-2 flex-shrink-0 items-end">
                           <div className="flex gap-2">
-                            {/* Edit toggle */}
                             <button
                               onClick={() => toggleEdit(row)}
                               className="px-3 py-1.5 rounded-lg text-xs font-medium"
@@ -391,7 +381,6 @@ export default function ScoresModule() {
                             </button>
                           </div>
 
-                          {/* Deny confirm */}
                           {confirmingDenyId === row.id && (
                             <div className="flex gap-2 items-center">
                               <input
@@ -416,14 +405,13 @@ export default function ScoresModule() {
                       </div>
                     </div>
 
-                    {/* ── Edit panel (expandable) ── */}
+                    {/* ── Edit panel ── */}
                     {isEditOpen && (
                       <div className="px-5 pb-5 space-y-4"
                         style={{ borderTop: '1px solid rgba(255,169,74,0.15)' }}>
 
                         <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                          {/* Left: points adjuster + adjustment note */}
                           <div className="space-y-4">
                             <div>
                               <label className="block text-xs uppercase tracking-wider mb-2"
@@ -463,7 +451,6 @@ export default function ScoresModule() {
                               </p>
                             </div>
 
-                            {/* Adjustment note — required if points changed */}
                             <div>
                               <label className="block text-xs uppercase tracking-wider mb-1.5"
                                 style={{ color: pointsChanged ? '#ffa94a' : '#4a6fa5' }}>
@@ -485,7 +472,6 @@ export default function ScoresModule() {
                               />
                             </div>
 
-                            {/* Reset to original */}
                             {pointsChanged && (
                               <button
                                 onClick={() => updateEditField(row.id, 'adjustedPoints', row.points)}
@@ -496,7 +482,6 @@ export default function ScoresModule() {
                             )}
                           </div>
 
-                          {/* Right: driver history for this employee */}
                           <div className="rounded-xl p-4 space-y-3"
                             style={{ background: 'rgba(74,111,165,0.08)', border: '1px solid rgba(74,111,165,0.15)' }}>
                             <p className="text-xs uppercase tracking-wider font-medium" style={{ color: '#4a6fa5' }}>
@@ -531,7 +516,6 @@ export default function ScoresModule() {
                               </div>
                             )}
 
-                            {/* Offense count for this specific category */}
                             {edit.offenseCounts.length > 0 && (
                               <div className="pt-2" style={{ borderTop: '1px solid rgba(74,111,165,0.2)' }}>
                                 <p className="text-xs mb-1.5" style={{ color: '#4a6fa5' }}>
@@ -589,7 +573,7 @@ export default function ScoresModule() {
               <div />
               <div className="text-[#4a6fa5] text-xs uppercase tracking-wider">Employee</div>
               <div className="text-[#4a6fa5] text-xs uppercase tracking-wider text-center">Tenure</div>
-              <div className="text-[#4a6fa5] text-xs uppercase tracking-wider text-center">Performance</div>
+              <div className="text-[#4a6fa5] text-xs uppercase tracking-wider text-center">Merit</div>
               <div className="text-[#4a6fa5] text-xs uppercase tracking-wider text-center">Combined</div>
             </div>
 
@@ -611,13 +595,13 @@ export default function ScoresModule() {
                       className="flex items-center gap-3 min-w-0 text-left group"
                       onClick={() => setSelectedDriverId(row.employee_id)}
                     >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
-                        style={{ background: 'rgba(74,158,255,0.12)', color: '#4a9eff' }}>
-                        {row.employees?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </div>
                       <div className="min-w-0">
                         <div className="text-white text-sm font-medium truncate group-hover:text-[#4a9eff] transition-colors">
-                          {row.employees?.full_name}
+                          {(() => {
+                            const parts = row.employees?.full_name?.split(' ') ?? []
+                            if (parts.length >= 2) return `${parts[0][0]}. ${parts[parts.length - 1]}`
+                            return row.employees?.full_name
+                          })()}
                         </div>
                         <span className="text-xs px-1.5 py-0.5 rounded-full"
                           style={{
