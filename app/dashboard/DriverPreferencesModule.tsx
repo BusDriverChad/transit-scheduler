@@ -209,7 +209,7 @@ export default function DriverPreferencesModule() {
                 selectedEmployee?.id === emp.id ? 'bg-white border-l-4 border-l-blue-500 font-medium' : ''
               }`}
             >
-              {emp.last_name}, {emp.first_name}
+              {emp.full_name}
             </button>
           ))}
         </div>
