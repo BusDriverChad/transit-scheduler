@@ -136,7 +136,6 @@ export default function DriverPreferencesModule() {
     setPrefs({ ...prefs, position_preferences: list.map((p, i) => ({ ...p, rank: i + 1 })) })
   }
 
-  // Drag and drop handlers
   function handleDragStart(index: number) {
     setDragIndex(index)
   }
@@ -179,7 +178,7 @@ export default function DriverPreferencesModule() {
   }
 
   const filteredEmployees = employees.filter(e =>
-    `${e.full_name}`.toLowerCase().includes(search.toLowerCase())
+    e.full_name.toLowerCase().includes(search.toLowerCase())
   )
 
   const availablePositions = positions.filter(
@@ -188,7 +187,6 @@ export default function DriverPreferencesModule() {
 
   return (
     <div className="flex h-full gap-0" style={{ minHeight: '600px' }}>
-      {/* Left panel — employee list */}
       <div className="w-64 flex-shrink-0 border-r border-gray-200 bg-gray-50 flex flex-col">
         <div className="p-3 border-b border-gray-200">
           <h2 className="font-semibold text-gray-800 mb-2">Driver Preferences</h2>
@@ -205,9 +203,11 @@ export default function DriverPreferencesModule() {
             <button
               key={emp.id}
               onClick={() => selectEmployee(emp)}
-              className={`w-full text-left px-4 py-3 text-sm border-b border-gray-100 hover:bg-gray-200 transition-colors text-gray-800 ${
-  selectedEmployee?.id === emp.id ? 'bg-white border-l-4 border-l-blue-500 font-medium text-gray-900' : 'text-gray-600'
-}`}
+              className={`w-full text-left px-4 py-3 text-sm border-b border-gray-100 hover:bg-gray-200 transition-colors ${
+                selectedEmployee?.id === emp.id
+                  ? 'bg-white border-l-4 border-l-blue-500 font-medium text-gray-900'
+                  : 'text-gray-600'
+              }`}
             >
               {emp.full_name}
             </button>
@@ -215,7 +215,6 @@ export default function DriverPreferencesModule() {
         </div>
       </div>
 
-      {/* Right panel — preference editor */}
       <div className="flex-1 overflow-y-auto p-6">
         {!selectedEmployee ? (
           <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
@@ -228,7 +227,7 @@ export default function DriverPreferencesModule() {
         ) : (
           <div className="max-w-2xl space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-lg font-semibold text-gray-300">
                 {selectedEmployee.full_name}
               </h3>
               <button
@@ -240,13 +239,12 @@ export default function DriverPreferencesModule() {
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
-                {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Preferences'}
+                {saving ? 'Saving...' : saved ? 'Saved' : 'Save Preferences'}
               </button>
             </div>
 
-            {/* Shift preference */}
             <section>
-             className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-2">Shift Preference</h4>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Shift Preference</h4>
               <div className="flex gap-2">
                 {(['AM', 'PM', 'none'] as const).map(opt => (
                   <button
@@ -264,9 +262,8 @@ export default function DriverPreferencesModule() {
               </div>
             </section>
 
-            {/* Days off preference */}
             <section>
-              <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Preferred Days Off</h4>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Preferred Days Off</h4>
               <div className="flex gap-2 flex-wrap">
                 {DAYS.map((day, i) => (
                   <button
@@ -284,11 +281,10 @@ export default function DriverPreferencesModule() {
               </div>
             </section>
 
-            {/* Toggles */}
             <section>
-              <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Other Preferences</h4>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Other Preferences</h4>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
+                <div className="flex items-center gap-3">
                   <div
                     onClick={() => setPrefs({ ...prefs, back_to_back_days_off: !prefs.back_to_back_days_off })}
                     className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${
@@ -299,9 +295,9 @@ export default function DriverPreferencesModule() {
                       prefs.back_to_back_days_off ? 'translate-x-5' : 'translate-x-1'
                     }`} />
                   </div>
-                  <span className="text-sm text-gray-700">Prefers back-to-back days off</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
+                  <span className="text-sm text-gray-400">Prefers back-to-back days off</span>
+                </div>
+                <div className="flex items-center gap-3">
                   <div
                     onClick={() => setPrefs({ ...prefs, weekend_preference: !prefs.weekend_preference })}
                     className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${
@@ -312,16 +308,14 @@ export default function DriverPreferencesModule() {
                       prefs.weekend_preference ? 'translate-x-5' : 'translate-x-1'
                     }`} />
                   </div>
-                  <span className="text-sm text-gray-700">Prefers weekends off</span>
-                </label>
+                  <span className="text-sm text-gray-400">Prefers weekends off</span>
+                </div>
               </div>
             </section>
 
-            {/* Position preferences — ranked list */}
             <section>
-              <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Position Preferences (ranked)</h4>
-              <p className="text-xs text-gray-400 mb-3">Drag to reorder. Rank 1 = most preferred.</p>
-
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Position Preferences (ranked)</h4>
+              <p className="text-xs text-gray-500 mb-3">Drag to reorder. Rank 1 = most preferred.</p>
               {prefs.position_preferences.length === 0 ? (
                 <p className="text-sm text-gray-400 italic mb-3">No positions ranked yet</p>
               ) : (
@@ -338,16 +332,14 @@ export default function DriverPreferencesModule() {
                       }`}
                     >
                       <span className="text-gray-400 font-mono w-5 text-center">{p.rank}</span>
-                      <span className="flex-1 font-medium">{p.position_name}</span>
-                      <button onClick={() => moveUp(index)} disabled={index === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 px-1">↑</button>
-                      <button onClick={() => moveDown(index)} disabled={index === prefs.position_preferences.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 px-1">↓</button>
-                      <button onClick={() => removePositionPref(p.position_id)} className="text-red-400 hover:text-red-600 px-1">✕</button>
+                      <span className="flex-1 font-medium text-gray-800">{p.position_name}</span>
+                      <button onClick={() => moveUp(index)} disabled={index === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 px-1">up</button>
+                      <button onClick={() => moveDown(index)} disabled={index === prefs.position_preferences.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 px-1">dn</button>
+                      <button onClick={() => removePositionPref(p.position_id)} className="text-red-400 hover:text-red-600 px-1">x</button>
                     </div>
                   ))}
                 </div>
               )}
-
-              {/* Add position dropdown */}
               {availablePositions.length > 0 && (
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Add a position:</p>
@@ -366,9 +358,8 @@ export default function DriverPreferencesModule() {
               )}
             </section>
 
-            {/* Notes */}
             <section>
-              <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Supervisor Notes</h4>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Supervisor Notes</h4>
               <textarea
                 value={prefs.notes}
                 onChange={e => setPrefs({ ...prefs, notes: e.target.value })}
