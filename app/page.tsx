@@ -12,11 +12,32 @@ export default function LoginPage() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = '/dashboard'
+      if (session) window.location.replace('/dashboard')
     })
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setLoggedIn(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) setLoggedIn(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setLoggedIn(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) setLoggedIn(true)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -24,11 +45,7 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
-    } else {
-      window.location.href = '/dashboard'
-    }
+    if (error) {setError(error.message) } else { window.location.href = '/dashboard'}
     setLoading(false)
   }
 
@@ -47,16 +64,20 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0f1e] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+
       <div className="absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage: 'linear-gradient(#4a9eff 1px, transparent 1px), linear-gradient(90deg, #4a9eff 1px, transparent 1px)',
           backgroundSize: '40px 40px'
         }}
       />
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10"
         style={{ background: 'radial-gradient(circle, #4a9eff 0%, transparent 70%)' }}
       />
+
       <div className="relative w-full max-w-sm">
+
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5"
             style={{ background: 'linear-gradient(135deg, #4a9eff 0%, #1a6fd4 100%)', boxShadow: '0 0 40px rgba(74,158,255,0.4)' }}>
@@ -101,7 +122,9 @@ export default function LoginPage() {
         {mode === 'email' && (
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-[#4a6fa5] uppercase tracking-wider mb-2">Email</label>
+              <label className="block text-xs font-medium text-[#4a6fa5] uppercase tracking-wider mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
@@ -109,13 +132,19 @@ export default function LoginPage() {
                 required
                 placeholder="you@transitdept.com"
                 className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', caretColor: '#4a9eff' }}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  caretColor: '#4a9eff'
+                }}
                 onFocus={e => e.target.style.borderColor = '#4a9eff'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#4a6fa5] uppercase tracking-wider mb-2">Password</label>
+              <label className="block text-xs font-medium text-[#4a6fa5] uppercase tracking-wider mb-2">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -123,17 +152,23 @@ export default function LoginPage() {
                 required
                 placeholder="••••••••"
                 className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', caretColor: '#4a9eff' }}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  caretColor: '#4a9eff'
+                }}
                 onFocus={e => e.target.style.borderColor = '#4a9eff'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
               />
             </div>
+
             {error && (
               <div className="text-red-400 text-sm text-center py-2 px-4 rounded-lg"
                 style={{ background: 'rgba(255,80,80,0.1)', border: '1px solid rgba(255,80,80,0.2)' }}>
                 {error}
               </div>
             )}
+
             <button
               type="submit"
               disabled={loading}
@@ -195,10 +230,3 @@ export default function LoginPage() {
     </div>
   )
 }
-```
-
-Save it. Then we need to create the dashboard folder. In your command prompt run:
-```
-mkdir app\dashboard
-echo. > app\dashboard\page.tsx
-notepad app\dashboard\page.tsx
